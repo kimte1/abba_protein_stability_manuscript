@@ -1,0 +1,1 @@
+rosetta_scripts.default.linuxgccrelease -parser:protocol make_bbs_rd5v2.xml -in:file:s start.pdb -nstruct 500 -parser:script_vars rg_weight=1.0 blueprint_file_name=heeh_2.bp use_abego_bias=True ss_file_name=heeh_2.bp.ss ss_threshold=0.9 
