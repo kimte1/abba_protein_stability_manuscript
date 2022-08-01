@@ -1,0 +1,13 @@
+# This file is for limiting the number of glycines in a pose using the
+# `aa_composition` mover, restricting the number of glycines, threonines, and valines to zero by
+# imposing a 100-point penalty to anything with one glycine, with an even
+# higher penalty for more glycines.
+PENALTY_DEFINITION
+TYPE GLY THR VAL
+ABSOLUTE 0
+PENALTIES 0 100
+DELTA_START 0
+DELTA_END 1
+BEFORE_FUNCTION CONSTANT
+AFTER_FUNCTION CONSTANT
+END_PENALTY_DEFINITION

@@ -1,0 +1,25 @@
+# The below definition is for restricting certain amino acids in a pose using the
+# `aa_composition` mover, restricting the number of the given amino acids to
+# zero by imposing a 100-point penalty to anything with one of the amino acids,
+# with an even higher penalty for more than one.
+
+PENALTY_DEFINITION
+TYPE CYS MET
+ABSOLUTE 0
+PENALTIES 0 100
+DELTA_START 0
+DELTA_END 1
+BEFORE_FUNCTION CONSTANT
+AFTER_FUNCTION CONSTANT
+END_PENALTY_DEFINITION
+
+PENALTY_DEFINITION
+TYPE ALA LEU VAL ILE MET TYR TRP PHE
+ABSOLUTE 18
+PENALTIES 100 0 0 0 0 0 0 100
+DELTA_START -4
+DELTA_END 3
+BEFORE_FUNCTION QUADRATIC
+AFTER_FUNCTION QUADRATIC
+END_PENALTY_DEFINITION
+

@@ -1,0 +1,139 @@
+<ROSETTASCRIPTS>
+
+<SCOREFXNS>
+        # Standard score function for design with the weights file specified by an
+        # input variable. This score function also incorporates the `aa_composition`
+        # term.
+        <ScoreFunction name="sfxn_with_aa_comp"  weights="%%weights_file%%">
+            <Reweight scoretype="aa_composition" weight="1.0" />
+        </ScoreFunction>
+
+        # Same score function as above, but without the `aa_composition` term to
+        # enable scoring of designs without this additional term
+        <ScoreFunction name="sfxn_without_aa_comp"  weights="%%weights_file%%"/>
+        <ScoreFunction name="TotalHydrophobic" weights="total_hydrophobic_weights.wts"/>
+</SCOREFXNS>
+
+<RESIDUE_SELECTORS>
+        # Select all helices in a structure, as determined by `dssp`
+        <SecondaryStructure name="helices" ss="H"/>
+
+        # Select all strands in a structure, as determined by `dssp`
+        <SecondaryStructure name="strands" ss="E"/>
+
+        # Selects surface residues using number of side-chain neighbors, using
+        # a cutoff of 1.3 below which a residue is considered to be on the surface
+        # (I took 1.3 from the `LayerDesign` protocol from Rocklin et al, 2017, Science)
+        <Layer name="surface" use_sidechain_neighbors="true" select_surface="true" surface_cutoff="1.3"/>
+        <Index name="residue_20" resnums="20A" />
+        <Index name="residue_21" resnums="21A" /> 
+        <Index name="residue_22" resnums="22A" /> 
+        <Index name="residue_25" resnums="25A" />  
+       
+</RESIDUE_SELECTORS>
+
+<TASKOPERATIONS>
+        # `limitchi2` prevents the use of rotamers of Phe, Try, His, and Trp (since
+        # `include_trp`=1) that have chi_2 angles far from 90 degrees (between 70-110)
+        # to account for an inaccuracy in the energy function related to smoothening.
+        <LimitAromaChi2 name="limitchi2" include_trp="1" />
+
+        # 'p_res20' restricts residue 20 to be polar
+        <DesignRestrictions name="p_res20" >
+            <Action residue_selector="residue_20" aas="QNSTDEHKR" />
+        </DesignRestrictions>
+
+        # 'np_res21' restricts residue 21 to be nonpolar (also include Y)
+        <DesignRestrictions name="np_res21" >
+            <Action residue_selector="residue_21" aas="AVILMFWY" />
+        </DesignRestrictions>
+        
+
+        # 'np_res22' restricts residue 22 to be nonpolar (also include Y)
+        <DesignRestrictions name="np_res22" >
+            <Action residue_selector="residue_22" aas="AVILMFWY" />
+        </DesignRestrictions>
+        
+        # 'p_res25' restricts residue 25 to be polar
+        <DesignRestrictions name="p_res25" >
+            <Action residue_selector="residue_25" aas="QNSTDEHKR" />
+        </DesignRestrictions>
+
+
+
+        # For initializing flags from the command line, such as the `-multi_cool_annealer flag`
+        <InitializeFromCommandline name="init"/>
+</TASKOPERATIONS>
+
+<FILTERS>
+        # For computing the total score and total score per residue of the pose without
+        # filtering out anything
+        <ScoreType name="total_score" scorefxn="sfxn_without_aa_comp" confidence="0" threshold="999"/>
+        <ResidueCount name="res_count_all" max_residue_count="9999" confidence="0"/>
+        <CalculatorFilter name="score_per_res" equation="total_score / res" threshold="-2.4" confidence="1">
+                <Var name="total_score" filter="total_score"/>
+                <Var name="res" filter="res_count_all"/>
+        </CalculatorFilter>
+        <ScoreType name="total_hydrophobic" scorefxn="TotalHydrophobic" threshold="0"/>
+        <TotalSasa name="exposed_hydrophobics" confidence="1" hydrophobic="True" upper_threshold="1700"/>
+        <CalculatorFilter name="buried_np" equation="total - exposed" threshold="1" confidence="1">
+            <Var name="total" filter="total_hydrophobic"/>
+            <Var name="exposed" filter="exposed_hydrophobics"/>
+        </CalculatorFilter>
+        <CalculatorFilter name="buried_np_per_res" equation="-buried / res" threshold="-122" confidence="1">
+            <Var name="buried" filter="buried_np"/>
+            <Var name="res" filter="res_count_all"/>
+        </CalculatorFilter>
+        
+        <SSPrediction name="mismatch_probability" confidence="1" cmd="/projects/p30802/local/psipred/psipred/runpsipred_single" use_probability="1" mismatch_probability="True" use_svm="0" threshold="0.25"/>
+
+
+
+        
+</FILTERS>
+
+<MOVERS>
+        # I will use this mover to attach amino-acid constraints to a pose before
+        # designing it using `FastDesign`. The specific constraints are encoded in
+        # COMP files provided by the variables `ss_aa_comp_file` and
+        # `surface_aa_comp_file`. These constraints will specifically be applied to
+        # helices/sheets or surface residues, respectively, as specified by the
+        # above residue selectors.
+        <AddCompositionConstraintMover name="helix_aa_comp" filename="%%ss_aa_comp_file%%" selector="helices" />
+        <AddCompositionConstraintMover name="strand_aa_comp" filename="%%strand_aa_comp_file%%" selector="strands" />
+        <AddCompositionConstraintMover name="surface_aa_comp" filename="%%surface_aa_comp_file%%" selector="surface" />
+        <AddCompositionConstraintMover name="global_aa_comp" filename="%%global_aa_comp_file%%" />
+
+        # `FastDesign` that calls `limitchi2` to prevent the use of certain rotamers
+        # for certain aromatic amino acids, the score function with amino-acid
+        # composition constraints, and four repeats of four cycles of packing/minimization
+        <FastDesign name="fastdes" task_operations="limitchi2,init,p_res20,np_res21,np_res22,p_res25" scorefxn="sfxn_with_aa_comp" repeats="1" relaxscript="%%relaxscript%%" />
+
+
+        # A mover to convert the pose into a poly-X backbone, where the amino-acid
+        # X is specified by the input variable `poly_x`
+        <MakePolyX name="make_poly_x" aa="%%poly_x%%" />
+</MOVERS>
+
+<PROTOCOLS>
+        # Add `aa_composition` constraints to the pose
+        <Add mover="helix_aa_comp" />
+        <Add mover="strand_aa_comp" />
+        <Add mover="surface_aa_comp" />
+        <Add mover="global_aa_comp" />
+
+        # Convert the pose into a poly-X backbone, where X is specified by an input
+        # variable (see above)
+        <Add mover_name="make_poly_x"/>
+
+        # FastDesign at all residues
+        <Add mover_name="fastdes"/>
+
+        # Compute the total score and the score per residue of the pose
+        <Add filter_name="total_score" />
+        <Add filter_name="score_per_res" />
+        <Add filter_name="buried_np_per_res" />
+        <Add filter_name="mismatch_probability" />
+</PROTOCOLS>
+
+</ROSETTASCRIPTS>
