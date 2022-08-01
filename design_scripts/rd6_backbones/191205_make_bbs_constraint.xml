@@ -1,0 +1,93 @@
+<ROSETTASCRIPTS>
+
+<SCOREFXNS>
+    # A variant of the centroid score function
+    <ScoreFunction name="SFXN1" weights="fldsgn_cen">
+        <Reweight scoretype="rg" weight="%%rg_weight%%" />
+        <Reweight scoretype="hbond_sr_bb" weight="1.0" />
+        <Reweight scoretype="hbond_lr_bb" weight="1.0" />
+        <Reweight scoretype="atom_pair_constraint" weight="1.0" />
+        <Reweight scoretype="angle_constraint" weight="1.0" />
+        <Reweight scoretype="dihedral_constraint" weight="1.0" />
+    </ScoreFunction>
+</SCOREFXNS>
+
+<TASKOPERATIONS>
+    # For defining the core layer using the side-chain neighbor
+    # algorithm, with a cutoff of 4 neighbors, above which a
+    # residue is considered to be in the core. Not sure why the
+    # `pore_radius` variable is specified. Seems irrelevant.
+    <LayerDesign name="layer_core_SCN" layer="core" pore_radius="2.0" verbose="true" use_sidechain_neighbors="True" core="4" />
+</TASKOPERATIONS>
+
+<FILTERS>
+    # For identifying designs with a helical kink
+    <HelixKink name="hk1" blueprint="%%blueprint_file_name%%"/>
+
+    # Appears to be for filtering poses that don't have the correct strand-strand pairing.
+    # Note: this filter is currently not used, but is an available option.
+    <SheetTopology name="sf1" blueprint="%%blueprint_file_name%%"/>
+
+    # For determining whether the designed SS matches the SS encoded
+    # in the relevant input file
+    <SecondaryStructure name="ss1" blueprint="%%ss_file_name%%" threshold="%%ss_threshold%%" confidence="1.0"/>
+
+    # For counting the total number of residues
+    <ResidueCount name="res_count_all" max_residue_count="9999" confidence="0"/>
+
+    # For counting the number of core residues
+    <ResidueCount name="res_count_core_SCN" task_operations="layer_core_SCN" max_residue_count="9999" confidence="0"/>
+
+    # For computing the percent core residues in a protein
+    <CalculatorFilter name="percent_core_SCN" equation="- rescount_coreSCN / (rescount3 + 0.01)" threshold="-0.1" confidence="1" >
+        <Var name="rescount3" filter="res_count_all"/>
+        <Var name="rescount_coreSCN" filter="res_count_core_SCN"/>
+    </CalculatorFilter>
+
+    # For computing the average degree of connectivity of core residues. Residue
+    # in the core of the pose must have average of `threshold` residues
+    # within a sphere of size (radius?) 10 (A?)
+    <AverageDegree name="degree_core_SCN" task_operations="layer_core_SCN" confidence="1.0" threshold="8.8"/>
+</FILTERS>
+
+<MOVERS>
+    # For using dssp to compute secondary structure and load onto
+    # pose
+    <Dssp name="dssp" />
+
+    # For adding a scoring bonus if the pose matches the SS
+    # specified by the input blueprint
+    <SetSecStructEnergies name="set_ssene1" scorefxn="SFXN1" blueprint="%%blueprint_file_name%%" />
+
+    # For adding constraints for beta sheets, as defined by the
+    # input blueprint file
+    <SheetCstGenerator name="sheet_new1" cacb_dihedral_tolerance="0.6" blueprint="%%blueprint_file_name%%" weight="1.0" />
+
+    # For building a structure in centroid mode from an input
+    # blueprint and PDB
+    <BluePrintBDR name="bdr1" use_abego_bias="%%use_abego_bias%%" scorefxn="SFXN1" constraint_generators="sheet_new1" constraints_NtoC="0" blueprint="%%blueprint_file_name%%" constraint_file="%%constraint_file_name%%" />
+</MOVERS>
+
+<PROTOCOLS>
+    # Make it so that poses that match the SS specified by the
+    # input blueprint get a bonus during design
+    <Add mover_name="set_ssene1" />
+
+    # Design centroid poses from the starting blueprint
+    <Add mover_name="bdr1" />
+
+    # Add a DSSP string to the pose
+    <Add mover_name="dssp" />
+
+    # Score the pose using a number of metrics that relate
+    # to the designed secondary structure
+    <Add filter_name="hk1"/>
+    <Add filter_name="ss1"/>
+    <Add filter_name="sf1"/>
+
+    # Filter designs based on core packing
+    <Add filter_name="degree_core_SCN" /> # filter confidence = 1.0
+    <Add filter_name="percent_core_SCN" /> # filter confidence = 0.0
+</PROTOCOLS>
+
+</ROSETTASCRIPTS>
