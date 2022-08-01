@@ -1,0 +1,3 @@
+#!/bin/bash
+#!/bin/bash
+ls ../bbs02/ | parallel -j 50 -N 1 -k --joblog joblog 'rosetta_scripts.static.linuxgccrelease -in:file:s ../bbs02/{} -parser:protocol design_nolimitLoop.xml -nstruct 2 -multi_cool_annealer 10 -parser:script_vars net_charge_file=191231_harmonic.charge weights_file=weight_B.wts surface_aa_comp_file=total_hydrophobicity_2.comp helix_aa_comp_file=limit_residues_in_helix.comp strand_aa_comp_file=limit_residues_in_strand.comp global_aa_comp_file=limit_cys_met_and_hydrophobic_globe2.comp poly_x=VAL relaxscript=rosettacon2018.txt -beta -corrections::score::rama_pp_map scoring/score_functions/rama/fd_beta_nov2016/ -corrections::beta_nov16 -out:path:all ../design02 && mv ../bbs02/{} ../bbs02_done/{}  <<<{}'

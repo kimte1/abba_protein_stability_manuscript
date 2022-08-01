@@ -1,0 +1,12 @@
+# The below code penalizes proteins for having any aromatic/
+# aliphatic amino acids across all residues by providing a 100-point penalty
+# for one aromatic/aliphatic and a larger penalty for more than one
+PENALTY_DEFINITION
+OR_PROPERTIES AROMATIC ALIPHATIC
+ABSOLUTE 0
+PENALTIES 0 0 0 100
+DELTA_START 0
+DELTA_END 3
+BEFORE_FUNCTION CONSTANT
+AFTER_FUNCTION QUADRATIC
+END_PENALTY_DEFINITION

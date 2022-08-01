@@ -1,0 +1,3 @@
+#!/bin/bash
+#!/bin/bash
+ls ../../191230_bbs_fullscale/bbs/00/* | parallel -j 40 -N 1 -k --joblog joblog --dry-run 'rosetta_scripts.static.linuxgccrelease -in:file:s {} -parser:protocol 1.xml -nstruct 2 -multi_cool_annealer 10 -parser:script_vars net_charge_file=X.charge weights_file=beta_nov16.wts surface_aa_comp_file=total_hydrophobicity_2.comp helix_aa_comp_file=limit_residues_in_helix.comp strand_aa_comp_file=limit_residues_in_strand.comp global_aa_comp_file=limit_cys_met_and_hydrophobic_globe2.comp poly_x=VAL relaxscript=rosettacon2018.txt -beta -corrections::score::rama_pp_map scoring/score_functions/rama/fd_beta_nov2016/ -corrections::beta_nov16 -out:suffix 21 <<<{}' 
