@@ -1,0 +1,42 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  Dissecting the stability determinants of a
+  challenging 61 de novo protein fold using massively
+  parallel design and 62 63 Q: 1;2;3;4;5;6;7
+  experimentation
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - affiliation: >-
+      Northwestern University Feinberg School of
+      Medicine
+    given-names: Tae-Eun Kim
+  - given-names: Kotaro Tsuboyama
+    affiliation: >-
+      Northwestern University Feinberg School of
+      Medicine
+  - given-names: Scott Houliston
+    affiliation: University of Toronto
+  - given-names: Cydney M. Martell
+    affiliation: >-
+      Northwestern University Feinberg School of
+      Medicine
+  - given-names: Claire M. Phoumyvong
+    affiliation: >-
+      Northwestern University Feinberg School of
+      Medicine
+  - given-names: Alexander Lemak
+    affiliation: University of Toronto
+  - given-names: Hugh K. Haddox
+    affiliation: University of Washington
+  - given-names: Cheryl H. Arrowsmith
+    affiliation: University of Toronto
+  - given-names: Gabriel J. Rocklin
+    affiliation: >-
+      Northwestern University Feinberg School of
+      Medicine
